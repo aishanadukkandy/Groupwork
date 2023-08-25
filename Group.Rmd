@@ -9,11 +9,11 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ## R Markdown
-### Wealth Inequality in United States
+## Wealth Inequality in United States
 Houcheng Li, Nan Xu, Aisha Shigna Nadukkandy
 
 
-## Overview of the data
+### Overview of the data
 
 Packages used for the analysis:
 ```{r packages}
@@ -97,7 +97,7 @@ custom_colors <- c("red", "blue", "orange", "green", "violet", "yellow")
 
 
 ggplot(filtered_data_race, aes(x = year, y = MeanIncome, color = race)) +
-  geom_line(aes(linewidth = 1.5), na.rm = TRUE) +  
+  geom_line(linewidth = 1.5, na.rm = TRUE) +  
   geom_point() +
   labs(x = "Year", y = "Mean Income", title = "Trends in Mean income over the years (1967 - 2019)") +
   scale_color_manual(values = custom_colors) +
@@ -255,3 +255,11 @@ ggplot(data, aes(x = wealth_ret, y = wealth)) +geom_point()+
         plot.background = element_rect(fill = 'grey60'),
         panel.background = element_rect(fill = 'grey60', colour = 'grey60'))
 ```
+
+## Conclusion
+
+1. Average income increased over the years regardless of the race.
+2. People belonging to the Whites and Asian race in US are earning more than the people belonging to Hispanic and Black race.
+3. People with higher income seems to be making more money over the yeras while the people with lower income shows a stagnant effect. 
+4. There exist income disparities among races. White people seems to have more wealth than other races, which seems to affect the retirement wealth too, proven    using linear regression.
+
