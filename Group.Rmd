@@ -1,0 +1,257 @@
+---
+title: "TidyTuesday"
+output: html_document
+date: "2023-08-25"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+### Wealth Inequality in United States
+Houcheng Li, Nan Xu, Aisha Shigna Nadukkandy
+
+
+## Overview of the data
+
+Packages used for the analysis:
+```{r packages}
+library(ggplot2)
+library(tidyverse)
+library(reshape2)
+library(gridExtra)
+library(dplyr)
+```
+
+Dataset 1:
+```{r income_distribution}
+income_distribution <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2021/2021-02-09/income_distribution.csv')
+income_distribution
+```
+
+```{r extract}
+extract <- income_distribution[income_distribution$race == "All Races",]
+data1 <- extract[,c(1,4,6)]
+data1 <- data1[!duplicated(data1$year),]
+data1$year <- as.factor(data1$year)
+data2 <- melt(data1, id.vars = "year")
+head(data2)
+```
+
+```{r data2}
+ggplot(data2, aes(x=factor(year), y=value, colour=variable, group=variable)) + 
+  geom_line(size=2) +
+  theme_minimal() +
+  scale_color_manual(values = c("income_median" = "blue", "income_mean" = "red")) +
+  labs(x = "Year", y = "Income", title = "Change in income over the years for all races combined") +
+  theme(plot.title = element_text(colour = 'black', family = 'Georgia', size = 16, hjust = 0.5),
+        plot.subtitle = element_text(colour = 'black', family = 'Georgia', size = 12),
+        axis.title = element_text(colour = 'black', family = 'Georgia', size = 16),
+        axis.text = element_text(colour = 'black', family = 'Georgia', size = 7, angle = 45),
+        legend.text = element_text(colour = 'black', family = 'Georgia', size = 10),
+        legend.position = 'top',
+        legend.title = element_blank(),
+        plot.background = element_rect(fill = 'grey60'),
+        panel.background = element_rect(fill = 'grey60', colour = 'grey60'))
+```
+
+```{r data3}
+data3 <- extract[,c(1,8,9)]
+colour=c("#DC143C","#0000FF","#20B2AA","#FFA500","#9370DB","#98FB98","#F08080","#1E90FF","#7CFC00","#FFFF00",  
+         "#808000","#FF00FF","#FA8072","#7B68EE","#9400D3","#800080","#A0522D","#D2B48C","#D2691E","#87CEEB","#40E0D0","#5F9EA0",
+         "#FF1493","#0000CD","#008B8B","#FFE4B5","#8A2BE2","#228B22","#E9967A","#4682B4","#32CD32","#F0E68C","#FFFFE0","#EE82EE",
+         "#FF6347","#6A5ACD","#9932CC","#8B008B","#8B4513","#DEB887")
+data3$income_bracket <- factor(data3$income_bracket,levels=unique(data3$income_bracket))
+head(data3)
+```
+
+```{r data31}
+ggplot(data3,aes(x=year, y=income_distribution,fill=factor(income_bracket))) + 
+  geom_col(position = "fill", width = 0.6) +
+  labs(x = "Year",y = "Bracket") +
+  scale_fill_manual(values = colour) +
+  labs(x = "Year", y = "Income Distribution", title = "CIncome distribution between different salary groups in US") +
+  theme_minimal() +
+  theme(plot.title = element_text(colour = 'black', family = 'Georgia', size = 16, hjust = 0.5),
+        plot.subtitle = element_text(colour = 'black', family = 'Georgia', size = 12),
+        axis.title = element_text(colour = 'black', family = 'Georgia', size = 16),
+        axis.text = element_text(colour = 'black', family = 'Georgia', size = 7, angle = 45),
+        legend.text = element_text(colour = 'black', family = 'Georgia', size = 6),
+        legend.position = 'top',
+        legend.title = element_blank(),
+        plot.background = element_rect(fill = 'grey60'),
+        panel.background = element_rect(fill = 'grey60', colour = 'grey60'))
+
+```
+
+```{r mean per race}
+race_exclusion <- c("Asian Alone or in Combination", "Black Alone or in Combination")
+
+filtered_data_race <- income_distribution %>%
+  filter(!race %in% race_exclusion) %>%
+  group_by(race, year) %>%
+  summarise(MeanIncome = mean(income_mean, na.rm = TRUE))
+
+custom_colors <- c("red", "blue", "orange", "green", "violet", "yellow")
+
+
+ggplot(filtered_data_race, aes(x = year, y = MeanIncome, color = race)) +
+  geom_line(aes(linewidth = 1.5), na.rm = TRUE) +  
+  geom_point() +
+  labs(x = "Year", y = "Mean Income", title = "Trends in Mean income over the years (1967 - 2019)") +
+  scale_color_manual(values = custom_colors) +
+  theme_minimal() +
+  theme(plot.title = element_text(colour = 'black', family = 'Georgia', size = 16, hjust = 0.5),
+        plot.subtitle = element_text(colour = 'black', family = 'Georgia', size = 12),
+        axis.title = element_text(colour = 'black', family = 'Georgia', size = 16),
+        axis.text = element_text(colour = 'black', family = 'Georgia', size = 14),
+        legend.text = element_text(colour = 'black', family = 'Georgia', size = 10),
+        legend.position = 'top',
+        legend.title = element_blank(),
+        plot.background = element_rect(fill = 'grey60'),
+        panel.background = element_rect(fill = 'grey60', colour = 'grey60'))
+```
+
+## Income share among races in US.
+
+Dataset 2:
+```{r nan1}
+income_aggregate <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2021/2021-02-09/income_aggregate.csv')
+income_aggregate
+```
+
+
+```{r nan4}
+#####pretreatment for this dataset###
+df1 <- income_aggregate %>% na.omit() %>% 
+  subset(year>=2000 & income_quintile!="Top 5%")
+df1
+#####reorder income_quintile###
+df1$income_quintile=factor(df1$income_quintile,c("Highest","Second","Third","Fourth","Lowest"))
+```
+```{r nan5}
+#####ggplot###
+ggplot(df1,aes(year,income_share,color=income_quintile))+
+  geom_line(linewidth= 1) + facet_grid(.~race)+
+  labs(title = "The income share of different races in 21th century ", xlab="Year",ylab="Income share",color="Classification")+
+  scale_x_continuous(breaks = c(2000,2010,2019))+ theme_minimal() +
+  scale_color_manual(values = c("Highest" = "blue", "Second" = "red", "Third" = "yellow", "Fourth" = "pink", "Lowest" = "black")) +
+  theme(plot.title = element_text(colour = 'black', family = 'Georgia', size = 16, hjust = 0.5),
+        plot.subtitle = element_text(colour = 'black', family = 'Georgia', size = 8),
+        axis.title = element_text(colour = 'black', family = 'Georgia', size = 16),
+        axis.text = element_text(colour = 'black', family = 'Georgia', size = 7, angle = 45),
+        strip.text = element_text(size = 7),
+        legend.text = element_text(colour = 'black', family = 'Georgia', size = 10),
+        legend.position = 'top',
+        legend.title = element_blank(),
+        plot.background = element_rect(fill = 'grey60'),
+        panel.background = element_rect(fill = 'grey60', colour = 'grey60'))
+
+```
+
+## Is Racial disparities cause wealth disparities in US?
+
+To analyse this we used two datssets, that provides data about the family wealth by race/year/measure normalized to 2016, and the amount of money people own after their retirement. 
+
+Dataset 3 and 4:
+```{r race wealth}
+race_wealth <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2021/2021-02-09/race_wealth.csv')
+race_wealth
+```
+
+```{r retirement- }
+retirement <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2021/2021-02-09/retirement.csv')
+retirement
+```
+
+
+```{r comparison between racial wealth and retirement money}
+wealthperrace <- race_wealth %>% 
+  group_by(race, year) %>% 
+  summarise(wealth = mean(wealth_family, na.rm= TRUE))
+
+wealth_plot <- ggplot(wealthperrace, aes(x = year, y = wealth, color = race)) +
+  geom_line(linewidth = 1, na.rm = TRUE) +
+  geom_point(na.rm = TRUE) +
+  labs(x = "Year", y = "Distribution of wealth per race", title = "Average family wealth by race (1963-2016)") +
+  scale_y_continuous(labels = scales::dollar_format(prefix = "$")) +
+  scale_color_manual(values = c("Black" = "blue", "Hispanic" = "green", "White" = "red")) +
+  theme_minimal() +
+  theme(plot.title = element_text(colour = 'black', family = 'Georgia', size = 12, hjust = 0.5),
+        plot.subtitle = element_text(colour = 'black', family = 'Georgia', size = 18),
+        axis.title = element_text(colour = 'black', family = 'Georgia', size = 14),
+        axis.text = element_text(colour = 'black', family = 'Georgia', size = 8),
+        legend.text = element_text(colour = 'black', family = 'Georgia', size = 8),
+        legend.position = 'top',
+        legend.title = element_blank(),
+        plot.background = element_rect(fill = 'grey60'),
+        panel.background = element_rect(fill = 'grey60', colour = 'grey60'))
+
+wealth_retirement <-  retirement %>% 
+  group_by(race, year) %>% 
+  summarise(wealth_ret = mean(retirement, na.rm= TRUE))
+
+ret_plot <- ggplot(wealth_retirement, aes(x = year, y = wealth_ret, color = race)) +
+  geom_line(linewidth = 1, na.rm = TRUE) +
+  geom_point(na.rm = TRUE) +
+  labs(x = "Year", y = "Retirement wealth", title = "Retirement wealth by race (1963-2016)") +
+  scale_y_continuous(labels = scales::dollar_format(prefix = "$")) +
+  scale_color_manual(values = c("Black" = "blue", "Hispanic" = "green", "White" = "red")) +
+  theme_minimal() +
+  theme(plot.title = element_text(colour = 'black', family = 'Georgia', size = 12, hjust = 0.5),
+        plot.subtitle = element_text(colour = 'black', family = 'Georgia', size = 18),
+        axis.title = element_text(colour = 'black', family = 'Georgia', size = 14),
+        axis.text = element_text(colour = 'black', family = 'Georgia', size = 8),
+        legend.text = element_text(colour = 'black', family = 'Georgia', size = 8),
+        legend.position = 'top',
+        legend.title = element_blank(),
+        plot.background = element_rect(fill = 'grey60'),
+        panel.background = element_rect(fill = 'grey60', colour = 'grey60'))
+
+combined_plots <- grid.arrange(wealth_plot, ret_plot, nrow = 2)
+print(combined_plots)
+
+```
+
+
+## Correlation between Retirement wealth and Family wealth
+```{r retirement}
+wealth_retirement <-  retirement %>% 
+  group_by(race, year) %>% 
+  summarise(wealth_ret = mean(retirement, na.rm= TRUE)) 
+wealth_retirement
+```
+'
+```{r wealthperrace}
+wealthperrace <- race_wealth %>% 
+  group_by(race, year) %>% 
+  summarise(wealth = mean(wealth_family, na.rm= TRUE))
+wealthperrace <- na.omit(wealthperrace)
+wealthperrace <- wealthperrace[-1,]
+wealthperrace
+
+```
+
+```{r data1}
+data <- left_join(wealth_retirement, wealthperrace, by = c("year","race"))
+data
+```
+
+```{r cor}
+library(ggpubr)
+ggplot(data, aes(x = wealth_ret, y = wealth)) +geom_point()+
+         geom_smooth(method="lm") + stat_cor()+
+  labs(x = "Retirement wealth", y = "Family wealth", title = "Correlation graph") +
+  scale_y_continuous(labels = scales::dollar_format(prefix = "$")) +
+  theme_minimal() +
+  theme(plot.title = element_text(colour = 'black', family = 'Georgia', size = 14, hjust = 0.5),
+        plot.subtitle = element_text(colour = 'black', family = 'Georgia', size = 18),
+        axis.title = element_text(colour = 'black', family = 'Georgia', size = 14),
+        axis.text = element_text(colour = 'black', family = 'Georgia', size = 8),
+        legend.text = element_text(colour = 'black', family = 'Georgia', size = 8),
+        legend.position = 'top',
+        legend.title = element_blank(),
+        plot.background = element_rect(fill = 'grey60'),
+        panel.background = element_rect(fill = 'grey60', colour = 'grey60'))
+```
